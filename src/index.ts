@@ -9,6 +9,7 @@ import { checkSimulation, gasPriceToGwei, printTransactions } from "./utils";
 import { Approval721 } from "./engine/Approval721";
 
 require('log-timestamp');
+require('dotenv').config();
 
 const BLOCKS_IN_FUTURE = 2;
 
