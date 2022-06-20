@@ -9,6 +9,7 @@ import { checkSimulation, gasPriceToGwei, printTransactions } from "./utils";
 import { Approval721 } from "./engine/Approval721";
 
 require('log-timestamp');
+require('dotenv').config();
 
 const BLOCKS_IN_FUTURE = 2;
 
@@ -65,6 +66,11 @@ async function main() {
   const HASHMASKS_ADDRESS = "0xC2C747E0F7004F9E8817Db2ca4997657a7746928";
   const engine: Base = new Approval721(RECIPIENT, [HASHMASKS_ADDRESS]);
   // ======= UNCOMMENT FOR 721 Approval ==========
+
+  // ======= UNCOMMENT FOR CryptoKitties ==========
+  // const KITTY_IDS = [KITTY_ID1,KITTY_ID2]
+  // const engine: Base = new CryptoKitties(provider, walletExecutor.address, RECIPIENT, KITTY_IDS);
+  // ======= UNCOMMENT FOR CryptoKitties ==========
 
   const sponsoredTransactions = await engine.getSponsoredTransactions();
 

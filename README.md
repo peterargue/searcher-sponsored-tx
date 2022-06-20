@@ -45,9 +45,9 @@ Usage
 ======================
 ```
 $ npm install
-$ PRIVATE_KEY_EXECUTOR=__COMPROMISED_PRIVATE_KEY__ \
-    PRIVATE_KEY_SPONSOR=__FUNDED_PRIVATE_KEY__ \
-    RECIPIENT=__ADDRESS_THAT_RECEIVES_ASSETS__ \
-    FLASHBOTS_SECRET=__YOUR_PERSONAL_SECRET__ \
-      npm run start
+
+# First create/update .env and populate environment variables
+cp example.env .env
+
+$ npm run start
 ```
