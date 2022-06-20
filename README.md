@@ -51,3 +51,18 @@ cp example.env .env
 
 $ npm run start
 ```
+
+
+Analyze Account
+======================
+
+* Check account on etherscan
+* Check account on opensea
+
+
+TODO
+======================
+* It would be nice to have a tool that searched the transaction history for an account, and recorded all tokens/NFTs received as part of those transactions, then reviewed all tokens received outside of a transaction and compared
+them against lists of known good tokens. The goal being to quickly identify valuable tokens and ignore scam tokens.
+* It would be nice for the multitoken engine to report how much gas would be used by running the list of tx so they could be prioritized
+* Break the send eth into something more official than a commented out code block

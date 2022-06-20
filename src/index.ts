@@ -6,7 +6,7 @@ import {
 import { BigNumber, providers, Wallet } from "ethers";
 import { Base } from "./engine/Base";
 import { checkSimulation, gasPriceToGwei, printTransactions } from "./utils";
-import { Approval721 } from "./engine/Approval721";
+import { MultiTransferERC20 } from "./engine/MultiTransferERC20";
 
 require('log-timestamp');
 require('dotenv').config();
@@ -42,14 +42,14 @@ async function main() {
   const walletRelay = new Wallet(FLASHBOTS_RELAY_SIGNING_KEY)
 
   // ======= UNCOMMENT FOR GOERLI ==========
-  const provider = new providers.InfuraProvider(5, process.env.INFURA_API_KEY || '');
-  const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay, 'https://relay-goerli.epheph.com/');
+  // const provider = new providers.InfuraProvider(5, process.env.INFURA_API_KEY || '');
+  // const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay, 'https://relay-goerli.epheph.com/');
   // ======= UNCOMMENT FOR GOERLI ==========
 
   // ======= UNCOMMENT FOR MAINNET ==========
-  // const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
-  // const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
-  // const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay);
+  const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
+  const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
+  const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay);
   // ======= UNCOMMENT FOR MAINNET ==========
 
   const walletExecutor = new Wallet(PRIVATE_KEY_EXECUTOR);
@@ -62,9 +62,16 @@ async function main() {
   // const engine: Base = new TransferERC20(provider, walletExecutor.address, RECIPIENT, tokenAddress);
   // ======= UNCOMMENT FOR ERC20 TRANSFER ==========
 
+  // ======= UNCOMMENT FOR MULTI ERC20 TRANSFER ==========
+  const tokenAddresses = [
+    "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
+  ];
+  const engine: Base = new MultiTransferERC20(provider, walletExecutor.address, RECIPIENT, tokenAddresses);
+  // ======= UNCOMMENT FOR MULTI ERC20 TRANSFER ==========
+
   // ======= UNCOMMENT FOR 721 Approval ==========
-  const HASHMASKS_ADDRESS = "0xC2C747E0F7004F9E8817Db2ca4997657a7746928";
-  const engine: Base = new Approval721(RECIPIENT, [HASHMASKS_ADDRESS]);
+  // const HASHMASKS_ADDRESS = "0xC2C747E0F7004F9E8817Db2ca4997657a7746928";
+  // const engine: Base = new Approval721(RECIPIENT, [HASHMASKS_ADDRESS]);
   // ======= UNCOMMENT FOR 721 Approval ==========
 
   // ======= UNCOMMENT FOR CryptoKitties ==========
@@ -80,19 +87,35 @@ async function main() {
       from: tx.from === undefined ? walletExecutor.address : tx.from
     }))
   )
-  const gasEstimateTotal = gasEstimates.reduce((acc, cur) => acc.add(cur), BigNumber.from(0))
-
+  let gasEstimateTotal = gasEstimates.reduce((acc, cur) => acc.add(cur), BigNumber.from(0))
   const gasPrice = PRIORITY_GAS_PRICE.add(block.baseFeePerGas || 0);
+
+  // Uncomment if you are transferring ETH out
+  // gasEstimateTotal = gasEstimateTotal.add(21000)
+  // const executorBalance = await walletExecutor.getBalance()
+
+  const sponsorAmount = gasEstimateTotal.mul(gasPrice)
+
   const bundleTransactions: Array<FlashbotsBundleTransaction | FlashbotsBundleRawTransaction> = [
     {
       transaction: {
         to: walletExecutor.address,
         gasPrice: gasPrice,
-        value: gasEstimateTotal.mul(gasPrice),
+        value: sponsorAmount,
         gasLimit: 21000,
       },
       signer: walletSponsor
     },
+    // Transfer all eth out
+    // {
+    //   transaction: {
+    //     to: RECIPIENT,
+    //     gasPrice: gasPrice,
+    //     value: executorBalance - sponsorAmount,
+    //     gasLimit: 21000,
+    //   },
+    //   signer: walletSponsor
+    // },
     ...sponsoredTransactions.map((transaction, txNumber) => {
       return {
         transaction: {
