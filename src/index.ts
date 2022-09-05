@@ -1,12 +1,14 @@
 import {
   FlashbotsBundleProvider, FlashbotsBundleRawTransaction,
-  FlashbotsBundleResolution,
-  FlashbotsBundleTransaction
+  FlashbotsBundleResolution, FlashbotsBundleTransaction,
+  DEFAULT_FLASHBOTS_RELAY
 } from "@flashbots/ethers-provider-bundle";
 import { BigNumber, providers, Wallet } from "ethers";
 import { Base } from "./engine/Base";
 import { checkSimulation, gasPriceToGwei, printTransactions } from "./utils";
 import { MultiTransferERC20 } from "./engine/MultiTransferERC20";
+import { TransferERC20 } from "./engine/TransferERC20";
+
 
 require('log-timestamp');
 require('dotenv').config();
@@ -14,7 +16,7 @@ require('dotenv').config();
 const BLOCKS_IN_FUTURE = 2;
 
 const GWEI = BigNumber.from(10).pow(9);
-const PRIORITY_GAS_PRICE = GWEI.mul(31)
+const PRIORITY_GAS_PRICE = GWEI.mul(25)
 
 const PRIVATE_KEY_EXECUTOR = process.env.PRIVATE_KEY_EXECUTOR || ""
 const PRIVATE_KEY_SPONSOR = process.env.PRIVATE_KEY_SPONSOR || ""
@@ -42,15 +44,16 @@ async function main() {
   const walletRelay = new Wallet(FLASHBOTS_RELAY_SIGNING_KEY)
 
   // ======= UNCOMMENT FOR GOERLI ==========
-  // const provider = new providers.InfuraProvider(5, process.env.INFURA_API_KEY || '');
-  // const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay, 'https://relay-goerli.epheph.com/');
+  const relayUrl = 'https://relay-goerli.flashbots.net'
   // ======= UNCOMMENT FOR GOERLI ==========
 
   // ======= UNCOMMENT FOR MAINNET ==========
+  // const relayUrl = DEFAULT_FLASHBOTS_RELAY
+  // ======= UNCOMMENT FOR MAINNET ==========
+
   const ETHEREUM_RPC_URL = process.env.ETHEREUM_RPC_URL || "http://127.0.0.1:8545"
   const provider = new providers.StaticJsonRpcProvider(ETHEREUM_RPC_URL);
-  const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay);
-  // ======= UNCOMMENT FOR MAINNET ==========
+  const flashbotsProvider = await FlashbotsBundleProvider.create(provider, walletRelay, relayUrl);
 
   const walletExecutor = new Wallet(PRIVATE_KEY_EXECUTOR);
   const walletSponsor = new Wallet(PRIVATE_KEY_SPONSOR);
@@ -58,13 +61,16 @@ async function main() {
   const block = await provider.getBlock("latest")
 
   // ======= UNCOMMENT FOR ERC20 TRANSFER ==========
-  // const tokenAddress = "0x4da27a545c0c5B758a6BA100e3a049001de870f5";
+  // const tokenAddress = "0xb0c0f148fb8d943ea8e2c5bd87034dd5f39e16eb";
   // const engine: Base = new TransferERC20(provider, walletExecutor.address, RECIPIENT, tokenAddress);
   // ======= UNCOMMENT FOR ERC20 TRANSFER ==========
 
   // ======= UNCOMMENT FOR MULTI ERC20 TRANSFER ==========
   const tokenAddresses = [
-    "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
+    "0xb0c0f148fb8d943ea8e2c5bd87034dd5f39e16eb",
+    "0x5f1f8dfe9a81480d6a1d17e7d5d93fba5611783b",
+    "0xb970667c8c84885c9e74c7d0be69faa38d2b19f0",
+    "0x4dc8c242921cc2733a2ce44ef41aff6ab2365fb7",
   ];
   const engine: Base = new MultiTransferERC20(provider, walletExecutor.address, RECIPIENT, tokenAddresses);
   // ======= UNCOMMENT FOR MULTI ERC20 TRANSFER ==========
@@ -75,7 +81,7 @@ async function main() {
   // ======= UNCOMMENT FOR 721 Approval ==========
 
   // ======= UNCOMMENT FOR CryptoKitties ==========
-  // const KITTY_IDS = [KITTY_ID1,KITTY_ID2]
+  // const KITTY_IDS = [KITTY_ID1, KITTY_ID2]
   // const engine: Base = new CryptoKitties(provider, walletExecutor.address, RECIPIENT, KITTY_IDS);
   // ======= UNCOMMENT FOR CryptoKitties ==========
 
@@ -90,11 +96,11 @@ async function main() {
   let gasEstimateTotal = gasEstimates.reduce((acc, cur) => acc.add(cur), BigNumber.from(0))
   const gasPrice = PRIORITY_GAS_PRICE.add(block.baseFeePerGas || 0);
 
+  const sponsorAmount = gasEstimateTotal.mul(gasPrice)
+
   // Uncomment if you are transferring ETH out
   // gasEstimateTotal = gasEstimateTotal.add(21000)
   // const executorBalance = await walletExecutor.getBalance()
-
-  const sponsorAmount = gasEstimateTotal.mul(gasPrice)
 
   const bundleTransactions: Array<FlashbotsBundleTransaction | FlashbotsBundleRawTransaction> = [
     {
@@ -106,15 +112,15 @@ async function main() {
       },
       signer: walletSponsor
     },
-    // Transfer all eth out
+    // Transfer all eth out (WARNING: this is untested)
     // {
     //   transaction: {
     //     to: RECIPIENT,
     //     gasPrice: gasPrice,
-    //     value: executorBalance - sponsorAmount,
+    //     value: executorBalance.sub(sponsorAmount),
     //     gasLimit: 21000,
     //   },
-    //   signer: walletSponsor
+    //   signer: walletExecutor
     // },
     ...sponsoredTransactions.map((transaction, txNumber) => {
       return {
