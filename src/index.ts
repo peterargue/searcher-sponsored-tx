@@ -61,16 +61,14 @@ async function main() {
   const block = await provider.getBlock("latest")
 
   // ======= UNCOMMENT FOR ERC20 TRANSFER ==========
-  // const tokenAddress = "0xb0c0f148fb8d943ea8e2c5bd87034dd5f39e16eb";
+  // const tokenAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
   // const engine: Base = new TransferERC20(provider, walletExecutor.address, RECIPIENT, tokenAddress);
   // ======= UNCOMMENT FOR ERC20 TRANSFER ==========
 
   // ======= UNCOMMENT FOR MULTI ERC20 TRANSFER ==========
   const tokenAddresses = [
-    "0xb0c0f148fb8d943ea8e2c5bd87034dd5f39e16eb",
-    "0x5f1f8dfe9a81480d6a1d17e7d5d93fba5611783b",
-    "0xb970667c8c84885c9e74c7d0be69faa38d2b19f0",
-    "0x4dc8c242921cc2733a2ce44ef41aff6ab2365fb7",
+    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
   ];
   const engine: Base = new MultiTransferERC20(provider, walletExecutor.address, RECIPIENT, tokenAddresses);
   // ======= UNCOMMENT FOR MULTI ERC20 TRANSFER ==========
@@ -99,8 +97,8 @@ async function main() {
   const sponsorAmount = gasEstimateTotal.mul(gasPrice)
 
   // Uncomment if you are transferring ETH out
-  // gasEstimateTotal = gasEstimateTotal.add(21000)
-  // const executorBalance = await walletExecutor.getBalance()
+  // const executorBalance = await provider.getBalance(walletExecutor.address)
+  // const executorAmount = executorBalance.sub(BigNumber.from(21000).mul(gasPrice));
 
   const bundleTransactions: Array<FlashbotsBundleTransaction | FlashbotsBundleRawTransaction> = [
     {
@@ -112,12 +110,12 @@ async function main() {
       },
       signer: walletSponsor
     },
-    // Transfer all eth out (WARNING: this is untested)
+    // Transfer all eth out
     // {
     //   transaction: {
     //     to: RECIPIENT,
     //     gasPrice: gasPrice,
-    //     value: executorBalance.sub(sponsorAmount),
+    //     value: executorAmount,
     //     gasLimit: 21000,
     //   },
     //   signer: walletExecutor
