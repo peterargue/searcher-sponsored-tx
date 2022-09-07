@@ -16,7 +16,7 @@ require('dotenv').config();
 const BLOCKS_IN_FUTURE = 2;
 
 const GWEI = BigNumber.from(10).pow(9);
-const PRIORITY_GAS_PRICE = GWEI.mul(25)
+const PRIORITY_GAS_PRICE = GWEI.mul(5)
 
 const PRIVATE_KEY_EXECUTOR = process.env.PRIVATE_KEY_EXECUTOR || ""
 const PRIVATE_KEY_SPONSOR = process.env.PRIVATE_KEY_SPONSOR || ""
